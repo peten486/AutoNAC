@@ -73,7 +73,6 @@ namespace AutoConnectLAN
 
 		public bool DownloadEdgeDriver(string url_path)
 		{
-			bool chk = false;
 			string _now = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 			string file_name = "driver_" + _now + ".zip";
 			Console.WriteLine("file : " + _driver_path + "\\" + file_name);
