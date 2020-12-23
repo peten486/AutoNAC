@@ -12,7 +12,7 @@ namespace AutoConnectLAN
 	public class CheckNAC
 	{
 		protected IWebDriver _driver = null;
-		string _driver_path = "E:\\source\\AutoConnectLAN\\drivers";
+		string _driver_path = "E:\\AutoNAC\\drivers";
 		string _brower_path = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 
 
@@ -140,7 +140,7 @@ namespace AutoConnectLAN
 			using (IWebDriver driver = new EdgeDriver(_driver_path))
 			{
 				//driver.Url = "http://peten.xyz";
-				driver.Url = "http://192.168.25.8";
+				driver.Url = "http://192.168.25.27";
 				// _driver.Manage().Window.Maximize(); //브라우져 최대 확대
 
 				Thread.Sleep(5000);
