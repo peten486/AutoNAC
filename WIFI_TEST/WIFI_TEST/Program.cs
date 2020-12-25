@@ -18,7 +18,18 @@ namespace WIFI_TEST
 		{
 			Console.WriteLine("Hello World!");
 			print_wifi();
-			wifi_conn(wifi_name, wifi_pass);
+
+			AccessPoint ap = null;
+
+			for (int i = 0; i < accessPoints.Count; i++)
+			{
+				if (accessPoints[i].Name.Equals(wifi_name))
+				{
+					ap = accessPoints[i];
+				}
+			}
+
+			wifi_conn( ap, wifi_pass);
 
 		}
 
@@ -58,67 +69,26 @@ namespace WIFI_TEST
 		/// Tries to connect to the given access point.
 		/// </summary>
 		/// <param name="name">The name of the access point.</param>
-		static void wifi_conn(string wifi_name, string wifi_pass)
+		static bool wifi_conn(AccessPoint ap, string password)
 		{
-			var accessPoints = GetAccessPointsOrderedBySignalStrength();
-			foreach (var accessPoint in accessPoints)
+			if (ap != null)
 			{
-				if (accessPoint.Name.Equals(name))
+				AuthRequest authRequest = new AuthRequest(ap);
+				authRequest.Password = password;
+				try
 				{
-					if (accessPoint.IsConnected)
+					while (!ap.Connect(authRequest, true))
 					{
-						Debug.WriteLine($"Already connected to access point named {accessPoint.Name}.\n");
-						return;
+						ap.Connect(authRequest);
 					}
-
-					var authRequest = new AuthRequest(accessPoint);
-					var overwrite = true;
-
-					if (authRequest.IsPasswordRequired)
-					{
-						if (accessPoint.HasProfile)
-						{
-							// Console.Write("\r\nA network profile already exist, do you want to use it (y/n)? ");
-							overwrite = false;
-						}
-					}
-
-					if (overwrite)
-					{
-						if (authRequest.IsUsernameRequired)
-						{
-							// Popup window for username
-							authRequest.Username = wifi_name;
-						}
-
-						// Popup window for password
-						authRequest.Password = wifi_pass;
-
-						if (authRequest.IsDomainSupported)
-						{
-							// Popup window for domain. Is this really necessary???
-						}
-					}
-
-					accessPoint.ConnectAsync(authRequest, overwrite, OnConnectionCompleted);
-					return;
 				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex.Message);
+				}
+				return true;
 			}
-		}
-
-		/// <summary>
-		/// Returns a list of access points ordered by their signal strength.
-		/// </summary>
-		/// <returns>
-		/// An IEnumerable of AccessPoints.
-		/// </returns>
-		public static IEnumerable<AccessPoint> GetAccessPointsOrderedBySignalStrength()
-		{
-			var accessPoints = Wifi.GetAccessPoints();
-			accessPoints.RemoveAll(ap => string.IsNullOrEmpty(ap.Name));
-			var orderedAccessPoints = accessPoints.OrderByDescending(ap => ap.SignalStrength);
-
-			return orderedAccessPoints;
+			return false;
 		}
 
 
