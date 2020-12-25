@@ -23,6 +23,7 @@ namespace AutoConnectLAN
             Controller c = new Controller();
             bool chk = c.firstInternetCheck();
             Console.WriteLine("chk : " + chk);
+            c.printN222();
 
             return 0;
         }

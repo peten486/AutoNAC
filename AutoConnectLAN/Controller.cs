@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
+using System.Management;
 
 namespace AutoConnectLAN
 {
@@ -130,6 +131,83 @@ namespace AutoConnectLAN
 				Console.WriteLine("> NetworkType : {0}", networkType2str( network_list[i].NetworkType ));
 				Console.WriteLine("======================================");
 			}
+		}
+
+		public void printN222()
+		{
+			/*
+			ManagementClass MC = new ManagementClass("Win32_NetworkAdapterConfiguration");
+			ManagementObjectCollection MOC = MC.GetInstances();
+			
+			foreach (ManagementObject MO in MOC)
+			{
+				if (MO["IPAddress"] != null)
+				{
+					if (MO["IPAddress"] is Array)
+					{ //IP 및 Subnet, Gatway String 배열로 변환... 
+						string[] addresses = (string[])MO["IPAddress"];
+						string[] subnets = (string[])MO["IPSubnet"];
+						string[] gateways = (string[])MO["DefaultIPGateway"];
+						
+						string cur_index = null;
+						if (MO["InterfaceIndex"].ToString().Equals("7"))
+						{
+							cur_index = "Wi-Fi";
+						}
+						else if (MO["InterfaceIndex"].ToString().Equals("3"))
+						{
+							cur_index = "Ethernet";
+						}
+						else
+						{
+							cur_index = MO["InterfaceIndex"].ToString();
+						}
+
+						//모두 null 이 아니면... 
+							if (addresses != null && subnets != null && gateways != null )
+						{
+							Console.WriteLine("======================================");
+							Console.WriteLine("> IPAddress : {0}", addresses[0]);
+							Console.WriteLine("> IPSubnet : {0}", subnets[0]);
+							Console.WriteLine("> DefaultIPGateway : {0}", gateways[0]);
+							Console.WriteLine("> Interface : {0}", cur_index);
+							Console.WriteLine("======================================");
+						}
+					}
+					else
+					{
+					}
+				}
+			} 
+			*/
+			/*
+			ManagementClass objMC = new ManagementClass("Win32_NetworkAdapter");
+			ManagementObjectCollection objMOC = objMC.GetInstances();
+
+			foreach (ManagementObject objMO in objMOC)
+			{
+				if (objMO["NetConnectionID"] != null)
+				{
+					Console.WriteLine(string.Format("{0} : {1}", "AdapterType", objMO["AdapterType"]));
+					Console.WriteLine(string.Format("{0} : {1}", "DeviceID", objMO["DeviceID"]));
+					Console.WriteLine(string.Format("{0} : {1}", "NetConnectionID", objMO["NetConnectionID"]));
+					Console.WriteLine("=====================================================================");
+				}
+			}
+			*/
+
+			var mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
+			var moc = mc.GetInstances();
+
+			foreach (var mo in moc)
+			{
+				if ((bool)mo["ipEnabled"])
+				{
+					Console.WriteLine(string.Format("{0} : {1}", "Caption", mo["Caption"].ToString()));
+				}
+			}
+
+			//return nicNames;
 		}
 
 		public string networkType2str(int network_type)
