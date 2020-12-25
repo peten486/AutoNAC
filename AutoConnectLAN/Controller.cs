@@ -73,44 +73,36 @@ namespace AutoConnectLAN
 		
 		public bool getNetworkSystem()
 		{
-			var networks = NetworkInterface.GetAllNetworkInterfaces(); // 사용가능한 모든 네트워크를 배열로 모음.
+			ManagementObjectSearcher objadapter = new ManagementObjectSearcher("select * from Win32_NetworkAdapter");
 
-			foreach (NetworkInterface net in networks)
+			foreach (ManagementObject obj in objadapter.Get())
 			{
-				
+				if (obj["NetEnabled"] != null)
+				{
+					if (obj["NetEnabled"].ToString().Equals("True"))
+					{
+						Console.WriteLine("======================================");
+						Console.WriteLine(string.Format("{0} : {1}", "Name", obj["Name"]));
+						Console.WriteLine(string.Format("{0} : {1}", "NetEnabled", obj["NetEnabled"].ToString()));
+						Console.WriteLine(string.Format("{0} : {1}", "AdapterType", obj["AdapterType"]));
+						Console.WriteLine(string.Format("{0} : {1}", "AdapterTypeID", obj["AdapterTypeID"]));
+						Console.WriteLine(string.Format("{0} : {1}", "Availability", obj["Availability"]));
+						Console.WriteLine(string.Format("{0} : {1}", "Manufacturer", obj["Manufacturer"]));
+						Console.WriteLine(string.Format("{0} : {1}", "NetConnectionID", obj["NetConnectionID"]));
+						Console.WriteLine(string.Format("{0} : {1}", "NetConnectionStatus", obj["NetConnectionStatus"]));
+						Console.WriteLine("======================================");
 
-				Console.WriteLine("net.Id: {0}", net.Id); // 네트워크의 고유id
-				Console.WriteLine("net.Name: {0}", net.Name); // 표기되는 이름
-				Console.WriteLine("net.IsReceiveOnly: {0}", net.IsReceiveOnly);
-				Console.WriteLine("net.OperationalStatus: {0}", net.OperationalStatus); // 연결됐습니까?
-				Console.WriteLine("net.NetworkInterfaceType: {0}", net.NetworkInterfaceType); // 구분용??
-				Console.WriteLine("net.Description: {0}", net.Description); // 장치설명
-				Console.WriteLine("net.SupportsMulticast: {0}", net.SupportsMulticast);
-				Console.WriteLine("------------------");
-				Network n = new Network();
-				n.DeviceId = net.Id;
-				n.Name = net.Name;
-				string temp = net.NetworkInterfaceType.ToString();
-				if (temp.Contains("Ethernet"))
-				{
-					n.NetworkType = 1;
-				}
-				else if (temp.Contains("Wireless"))
-				{
-					n.NetworkType = 2;
-				}
-				else
-				{
-					continue;
-				}
-
-				temp = net.Description.ToString();
-				if (temp.Contains("Bluetooth"))
-				{
-					continue;
+						Network n = new Network();
+						n.Name = obj["Name"].ToString();
+						n.NetEnabled = bool.Parse(obj["NetEnabled"].ToString());
+						n.AdapterType = obj["AdapterType"].ToString();
+						n.AdapterTypeID = int.Parse(obj["AdapterTypeID"].ToString());
+						n.NetConnectionID = obj["NetConnectionID"].ToString();
+						n.NetConnectionStatus = int.Parse(obj["NetConnectionStatus"].ToString());
+						network_list.Add(n);
+					}
 				}
 
-				network_list.Add(n);
 			}
 
 			if (network_list.Count <= 0)
@@ -126,9 +118,11 @@ namespace AutoConnectLAN
 			for (int i = 0; i < network_list.Count; i++)
 			{
 				Console.WriteLine("======================================");
-				Console.WriteLine("> DeviceID : {0}", network_list[i].DeviceId);
 				Console.WriteLine("> Name : {0}", network_list[i].Name);
-				Console.WriteLine("> NetworkType : {0}", networkType2str( network_list[i].NetworkType ));
+				Console.WriteLine("> AdapterType : {0}", network_list[i].AdapterType);
+				Console.WriteLine("> NetConnectionID : {0}", network_list[i].NetConnectionID);
+				Console.WriteLine("> AdapterTypeID : {0}", network_list[i].AdapterTypeID);
+				//	Console.WriteLine("> NetworkType : {0}", networkType2str( network_list[i].NetworkType ));
 				Console.WriteLine("======================================");
 			}
 		}
@@ -196,15 +190,50 @@ namespace AutoConnectLAN
 			}
 			*/
 
-			var mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
+			//			var mc = new ManagementClass("Win32_NetworkAdapterConfiguration");
+			/*
+			var mc = new ManagementClass("Win32_NetworkAdapter");
 			var moc = mc.GetInstances();
 
 			foreach (var mo in moc)
 			{
-				if ((bool)mo["ipEnabled"])
+				//if ((bool)mo["ipEnabled"])
 				{
-					Console.WriteLine(string.Format("{0} : {1}", "Caption", mo["Caption"].ToString()));
+					//	Console.WriteLine(string.Format("{0} : {1}", "InterfaceIndex", mo["InterfaceIndex"].ToString()));
+					Console.WriteLine(string.Format("{0} : {1}", "AdapterType", mo["AdapterType"].ToString()));
+					Console.WriteLine(string.Format("{0} : {1}", "AdapterTypeID", mo["AdapterTypeID"].ToString()));
+
 				}
+			}
+
+			*/
+
+			ManagementObjectSearcher objadapter = new ManagementObjectSearcher("select * from Win32_NetworkAdapter");
+
+			foreach (ManagementObject obj in objadapter.Get())
+			{
+					if(obj["NetEnabled"] != null)
+					{
+					
+						Console.WriteLine("======================================");
+						Console.WriteLine(string.Format("{0} : {1}", "Name", obj["Name"]));
+						Console.WriteLine(string.Format("{0} : {1}", "NetEnabled", obj["NetEnabled"].ToString()));
+						Console.WriteLine(string.Format("{0} : {1}", "AdapterType", obj["AdapterType"]));
+						Console.WriteLine(string.Format("{0} : {1}", "Availability", obj["Availability"]));
+						Console.WriteLine(string.Format("{0} : {1}", "Manufacturer", obj["Manufacturer"]));
+						Console.WriteLine(string.Format("{0} : {1}", "NetConnectionID", obj["NetConnectionID"]));
+						Console.WriteLine(string.Format("{0} : {1}", "NetConnectionStatus", obj["NetConnectionStatus"]));
+						Console.WriteLine("======================================");
+
+						Network n = new Network();
+						n.Name = obj["Name"].ToString();
+						n.NetEnabled = bool.Parse(obj["NetEnabled"].ToString());
+						n.AdapterType = obj["AdapterType"].ToString();
+						n.NetConnectionID = obj["NetConnectionID"].ToString();
+						n.NetConnectionStatus = int.Parse(obj["NetConnectionStatus"].ToString());
+						network_list.Add(n);
+					}
+				
 			}
 
 			//return nicNames;
