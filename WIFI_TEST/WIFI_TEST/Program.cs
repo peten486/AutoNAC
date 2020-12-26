@@ -8,31 +8,41 @@ namespace WIFI_TEST
 {
 	class Program
 	{
-		static string wifi_name = "WiFi";
-		static string wifi_pass = "1234";
+		const string wifi_name = "WiFi";
+		const string wifi_pass = "1234";
 
 		static Wifi Wifi = new Wifi();
 		static List<AccessPoint> accessPoints = new List<AccessPoint>();
+		static WiFi_AP_Infro cur_ap = null;
+
 
 		static void Main(string[] args)
 		{
-			Console.WriteLine("Hello World!");
+			cur_ap = new WiFi_AP_Infro(wifi_name, wifi_pass);
+			
 			print_wifi();
-
-			AccessPoint ap = null;
 
 			for (int i = 0; i < accessPoints.Count; i++)
 			{
 				if (accessPoints[i].Name.Equals(wifi_name))
 				{
-					ap = accessPoints[i];
+					cur_ap.ap = accessPoints[i];
 				}
 			}
 
-			wifi_conn( ap, wifi_pass);
-
+			if (cur_ap.ap != null)
+			{
+				wifi_conn(cur_ap.ap, wifi_pass);
+			}
+			else
+			{
+				Console.WriteLine("fail::connecting wifi");
+			}
 		}
 
+		/// <summary>
+		/// 연결 가능한 AccessPoint 리스트를 조회하고 Console에 출력하는 함수
+		/// </summary>
 		static void print_wifi()
 		{
 			accessPoints = Wifi.GetAccessPoints();
@@ -47,6 +57,10 @@ namespace WIFI_TEST
 			}
 		}
 
+
+		/// <summary>
+		/// 현재 Wi-Fi Connection 상태( true : Connected, false : Disconnected )
+		/// </summary>
 		static bool get_connection_status()
 		{
 			if (Wifi.ConnectionStatus == WifiStatus.Connected)
@@ -59,6 +73,9 @@ namespace WIFI_TEST
 			}
 		}
 
+		/// <summary>
+		/// 연결된 AccessPoint에서 연결 해제하는 함수(WiFi 연결 해제)
+		/// </summary>
 		static void wifi_disconn()
 		{
 			Console.WriteLine("-->DisConnection");
@@ -66,9 +83,10 @@ namespace WIFI_TEST
 		}
 
 		/// <summary>
-		/// Tries to connect to the given access point.
+		/// AccessPoint에 연결하는 함수(WiFi 연결)
 		/// </summary>
-		/// <param name="name">The name of the access point.</param>
+		/// <param name="ap">연결할 Access Point 객체</param>
+		/// <param name="password">연결할 Access Point의 비밀번호</param>
 		static bool wifi_conn(AccessPoint ap, string password)
 		{
 			if (ap != null)
