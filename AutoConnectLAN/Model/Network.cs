@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AutoConnectLAN
+namespace AutoConnectLAN.Model
 {
     public sealed class Network
     {

@@ -6,8 +6,9 @@ using System.IO.Compression;
 using HtmlAgilityPack;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium;
+using AutoConnectLAN.Model;
 
-namespace AutoConnectLAN
+namespace AutoConnectLAN.Control
 {
 	public class CheckNAC
 	{
