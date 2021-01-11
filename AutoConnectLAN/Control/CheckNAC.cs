@@ -139,8 +139,7 @@ namespace AutoConnectLAN.Control
 			bool chk = false;
 			using (IWebDriver driver = new EdgeDriver(_driver_path))
 			{
-				//driver.Url = "http://peten.xyz";
-				driver.Url = "http://192.168.25.27";
+				driver.Url = "http://192.168.25.15";
 				// _driver.Manage().Window.Maximize(); //브라우져 최대 확대
 
 				Thread.Sleep(5000);

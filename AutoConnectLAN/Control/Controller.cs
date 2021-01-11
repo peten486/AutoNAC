@@ -12,8 +12,10 @@ namespace AutoConnectLAN.Control
 	{
 		bool run_flag = false;
 		ReaderWriterLockSlim readerWriterLockSlim = null;
-		CheckNAC nAC = null;
-		CurNetwork curNetwork = null;
+		ReaderWriterLockSlim nACLockSlim = null;
+
+		public CheckNAC nAC = null;
+		public CurNetwork curNetwork = null;
 		List<Network> network_list = null;
 		WIFI_Process wifi_process = null;
 
@@ -22,6 +24,7 @@ namespace AutoConnectLAN.Control
 		{
 			run_flag = false;
 			readerWriterLockSlim = new ReaderWriterLockSlim();
+			nACLockSlim = new ReaderWriterLockSlim();
 			nAC = new CheckNAC();
 			curNetwork = new CurNetwork();
 			network_list = new List<Network>();
@@ -35,37 +38,172 @@ namespace AutoConnectLAN.Control
 			{
 				return false;
 			}
-
+			
 			getNetworkSystem();
 			printNetworkSystem();
 
 			return true;
 		}
 
-		void setFlag()
+		public void run()
+		{
+			Thread thread = new Thread(() => THR_CheckInternet());
+			thread.Start();
+
+			Thread.Sleep(2000);
+
+			Thread thread2 = new Thread(() => THR_CheckLoginNAC());
+			thread2.Start();
+		}
+
+		public void setFlag()
 		{
 			run_flag = true;
 		}
 
-		void setFlag_Exit()
+		public void setFlag_Exit()
 		{
 			run_flag = false;
 		}
 
-		void THR_CheckPing()
+		void THR_CheckInternet()
 		{
-			while (run_flag == false)
-			{
-				//curNetwork.InternetChk = false;
-				
+			bool chk = false;
+			int cnt = 0;
+			nACLockSlim.EnterReadLock();
+			try
+			{	
+				while (run_flag == true)
+				{
+					Thread.Sleep(2000);
+					Console.WriteLine("THR_CheckInternet start");
+					readerWriterLockSlim.EnterReadLock();
+					try
+					{
+						if (curNetwork.InternetChk == false)
+						{
+							// internet이 연결되지 않는 상태이면, 연결 시도
+							chk = isInternetConnected();
+							if (chk == false)
+							{
+								cnt = 0;
+								// 인터넷이 완전히 끊겼을 경우, WIFI 체크 후에 설정한 wifi가 설정되는지 확인
+								
+							}
+							else
+							{
+								getNetworkSystem();
+								if (network_list.Count <= 0)
+								{
+									Console.WriteLine("THR_CheckInternet :: getNetworkSystem count : " + network_list.Count );
+									continue;
+								}
 
+								Console.WriteLine("THR_CheckInternet :: setCurNetwork count : " + network_list.Count);
+
+								setCurNetwork();
+								if (curNetwork.InternetChk == true && curNetwork.NetworkType == 2)
+								{
+									printWiFiList();
+									wifi_process.wifi_conn();
+								}
+
+								if (curNetwork.InternetChk == true && curNetwork.NetworkType == 1)
+								{
+									Console.WriteLine("THR_CheckInternet :: curNetwork true");
+								}
+
+								if (curNetwork.InternetChk == false)
+								{
+									Console.WriteLine("THR_CheckInternet :: curNetwork false");
+								}
+
+								if (cnt == 0)
+								{
+									cnt++;
+									getNetworkSystem();
+									printNetworkSystem();
+								}
+							}
+						}
+						else
+						{
+							Console.WriteLine("curNetwork true");
+						}
+					}
+					finally
+					{
+						readerWriterLockSlim.ExitReadLock();
+					}
+				}
+			}
+			catch
+			{
+				nACLockSlim.ExitReadLock();
 			}
 		}
 
 		void THR_CheckLoginNAC()
 		{
-			while (run_flag == false)
+			/*
+			Console.WriteLine("Run Start - THR_CheckLoginNAC");
+			for (int i = 0; i < 10; i++)
 			{
+				Console.WriteLine(string.Format("Run THR_CheckLoginNAC {0}", i));
+			}
+			Console.WriteLine("Run End - THR_CheckLoginNAC");
+			*/
+			nACLockSlim.EnterReadLock(); 
+			try
+			{
+				while (run_flag == true)
+				{
+					Thread.Sleep(2000);
+					Console.WriteLine("THR_CheckLoginNAC start");
+					readerWriterLockSlim.EnterReadLock();
+					try
+					{
+						if (curNetwork.InternetChk == false)
+						{
+							// internet이 연결 안되어있으면 pass
+							Console.WriteLine("THR_CheckLoginNAC :: curNetwork false");
+							continue;
+						}
+						else
+						{
+							Console.WriteLine("THR_CheckLoginNAC :: curNetwork true");
+						}
+					}
+					finally
+					{
+						readerWriterLockSlim.ExitReadLock();
+					}
+
+					/*
+					 * 
+					 */
+
+					nACLockSlim.EnterWriteLock();
+					try
+					{
+						if (nAC.isCheckEdgeDriver(nAC.getEdgeVesrion()) == false)
+						{
+							nAC.downEdgeDriver(nAC.getEdgeVesrion());
+						}
+
+						bool chk = nAC.isLogin("user", "1234");
+						Console.WriteLine("THR_CheckLoginNAC :: chk : " + chk);
+					}
+					finally
+					{
+						nACLockSlim.ExitReadLock();
+					}
+
+				}
+			}
+			finally
+			{
+				nACLockSlim.ExitReadLock();
 			}
 		}
 
@@ -162,6 +300,61 @@ namespace AutoConnectLAN.Control
 			}
 		}
 
+		public void setCurNetwork()
+		{
+			int wifi_chk = -1;
+			int lan_chk = -1;
+			for (int i = 0; i < network_list.Count; i++)
+			{
+				if (network_list[i].NetworkType == 2)
+				{
+					wifi_chk = i;
+				}
+				else if (network_list[i].NetworkType == 1)
+				{
+					lan_chk = i;
+				}
+			}
+
+			if (wifi_chk == -1 && lan_chk == -1)
+			{
+				Console.WriteLine("err:not internet");
+				return;
+			}
+
+			/* lan_chk를 먼저 확인 */
+			if (lan_chk != -1)
+			{
+				// network
+				// CurNetwork
+				readerWriterLockSlim.EnterWriteLock();
+				curNetwork.NetworkType = network_list[lan_chk].NetworkType;
+				curNetwork.ChkDate = getNowDate();
+				curNetwork.InternetChk = true;
+				readerWriterLockSlim.ExitWriteLock();
+				Console.WriteLine("lan chk :: count(" + network_list.Count + ")");
+			}
+			else if (wifi_chk != -1)
+			{
+				readerWriterLockSlim.EnterWriteLock();
+				curNetwork.NetworkType = network_list[wifi_chk].NetworkType;
+				curNetwork.ChkDate = getNowDate();
+				curNetwork.InternetChk = true;
+				readerWriterLockSlim.ExitWriteLock();
+				Console.WriteLine("wifi chk :: count(" + network_list.Count + ")");
+			}
+			else
+			{
+				readerWriterLockSlim.EnterWriteLock();
+				curNetwork.NetworkType = -1;
+				curNetwork.ChkDate = "";
+				curNetwork.InternetChk = false;
+				readerWriterLockSlim.ExitWriteLock();
+				Console.WriteLine("chk :: count(" + network_list.Count + ")");
+			}
+
+		}
+
 		public void printWiFiList()
 		{
 			bool chk = false;
@@ -181,5 +374,10 @@ namespace AutoConnectLAN.Control
 			wifi_process.wifi_conn();
 		}
 
+		public string getNowDate()
+		{
+			string now_date = DateTime.Today.ToString();
+			return now_date;
+		}
 	}
 }

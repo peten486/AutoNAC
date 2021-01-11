@@ -22,9 +22,25 @@ namespace AutoConnectLAN
               */
 
             Controller c = new Controller();
-            bool chk = c.firstInternetCheck();
-            Console.WriteLine("chk : " + chk);
-            c.printWiFiList();
+            /*
+             bool chk = c.firstInternetCheck();
+             //Console.WriteLine("chk : " + chk);
+             if ( c.curNetwork.InternetChk == true && c.curNetwork.NetworkType == 2)
+             {
+                 c.printWiFiList();
+             }
+
+             if (c.nAC.isCheckEdgeDriver(c.nAC.getEdgeVesrion()) == false)
+             {
+                 c.nAC.downEdgeDriver(c.nAC.getEdgeVesrion());
+             }
+
+             chk = c.nAC.isLogin("user", "1234");
+             Console.WriteLine("chk : " + chk);
+            */
+
+            c.setFlag();
+            c.run();
 
             return 0;
         }
