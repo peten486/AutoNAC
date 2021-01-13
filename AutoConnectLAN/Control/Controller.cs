@@ -14,9 +14,15 @@ namespace AutoConnectLAN.Control
 		ReaderWriterLockSlim readerWriterLockSlim = null;
 		ReaderWriterLockSlim nACLockSlim = null;
 
-		public CheckNAC nAC = null;
+		/* reader writer lock slim */
 		public CurNetwork curNetwork = null;
+		/* reader writer lock slim */
+
+		/* nAC lock slim */
+		public CheckNAC nAC = null;
 		List<Network> network_list = null;
+		/* nAC lock slim */
+
 		WIFI_Process wifi_process = null;
 
 
@@ -68,142 +74,116 @@ namespace AutoConnectLAN.Control
 
 		void THR_CheckInternet()
 		{
-			bool chk = false;
 			int cnt = 0;
-			nACLockSlim.EnterReadLock();
-			try
-			{	
-				while (run_flag == true)
+			Console.WriteLine("[" + getNowDate() + "] 78 THR_CheckInternet start");
+			while (run_flag == true)
+			{
+				Thread.Sleep(2000);
+				
+				readerWriterLockSlim.EnterUpgradeableReadLock();
+				try
 				{
-					Thread.Sleep(2000);
-					Console.WriteLine("THR_CheckInternet start");
-					readerWriterLockSlim.EnterReadLock();
-					try
+					if (curNetwork.InternetChk == false)
 					{
+						// internet이 연결되지 않는 상태이면, 연결 시도
+						curNetwork.InternetChk = isInternetConnected();
 						if (curNetwork.InternetChk == false)
 						{
-							// internet이 연결되지 않는 상태이면, 연결 시도
-							chk = isInternetConnected();
-							if (chk == false)
-							{
-								cnt = 0;
-								// 인터넷이 완전히 끊겼을 경우, WIFI 체크 후에 설정한 wifi가 설정되는지 확인
-								
-							}
-							else
-							{
-								getNetworkSystem();
-								if (network_list.Count <= 0)
-								{
-									Console.WriteLine("THR_CheckInternet :: getNetworkSystem count : " + network_list.Count );
-									continue;
-								}
-
-								Console.WriteLine("THR_CheckInternet :: setCurNetwork count : " + network_list.Count);
-
-								setCurNetwork();
-								if (curNetwork.InternetChk == true && curNetwork.NetworkType == 2)
-								{
-									printWiFiList();
-									wifi_process.wifi_conn();
-								}
-
-								if (curNetwork.InternetChk == true && curNetwork.NetworkType == 1)
-								{
-									Console.WriteLine("THR_CheckInternet :: curNetwork true");
-								}
-
-								if (curNetwork.InternetChk == false)
-								{
-									Console.WriteLine("THR_CheckInternet :: curNetwork false");
-								}
-
-								if (cnt == 0)
-								{
-									cnt++;
-									getNetworkSystem();
-									printNetworkSystem();
-								}
-							}
+							cnt = 0;
+							// 인터넷이 완전히 끊겼을 경우, WIFI 체크 후에 설정한 wifi가 설정되는지 확인
 						}
 						else
 						{
-							Console.WriteLine("curNetwork true");
+							getNetworkSystem();
+							if (network_list.Count <= 0)
+							{
+								Console.WriteLine("[" + getNowDate() + "] 100 THR_CheckInternet :: getNetworkSystem count : " + network_list.Count );
+								continue;
+							}
+
+							Console.WriteLine("[" + getNowDate() + "] 104 THR_CheckInternet :: setCurNetwork count : " + network_list.Count);
+
+							cnt = network_list.Count;
+
+							setCurNetwork();
+							if (curNetwork.InternetChk == true && curNetwork.NetworkType == 2)
+							{
+								printWiFiList();
+								wifi_process.wifi_conn();
+							}
+
+							if (curNetwork.InternetChk == true && curNetwork.NetworkType == 1)
+							{
+								Console.WriteLine("[" + getNowDate() + "] 117 THR_CheckInternet :: curNetwork true");
+							}
+
+							if (curNetwork.InternetChk == false)
+							{
+								Console.WriteLine("[" + getNowDate() + "] 122 THR_CheckInternet :: curNetwork false");
+							}
+
+							if (cnt == 0)
+							{
+								cnt++;
+								getNetworkSystem();
+								printNetworkSystem();
+							}
 						}
 					}
-					finally
+					else
 					{
-						readerWriterLockSlim.ExitReadLock();
+						Console.WriteLine("[" + getNowDate() + "] 135 curNetwork true");
 					}
 				}
-			}
-			catch
-			{
-				nACLockSlim.ExitReadLock();
+				finally
+				{
+					readerWriterLockSlim.ExitUpgradeableReadLock();
+				}
 			}
 		}
 
 		void THR_CheckLoginNAC()
 		{
-			/*
-			Console.WriteLine("Run Start - THR_CheckLoginNAC");
-			for (int i = 0; i < 10; i++)
+			Console.WriteLine("[" + getNowDate() + "] 147 THR_CheckLoginNAC start");
+			while (run_flag == true)
 			{
-				Console.WriteLine(string.Format("Run THR_CheckLoginNAC {0}", i));
-			}
-			Console.WriteLine("Run End - THR_CheckLoginNAC");
-			*/
-			nACLockSlim.EnterReadLock(); 
-			try
-			{
-				while (run_flag == true)
+				Thread.Sleep(2000);
+				
+
+				readerWriterLockSlim.EnterUpgradeableReadLock();
+				try
 				{
-					Thread.Sleep(2000);
-					Console.WriteLine("THR_CheckLoginNAC start");
-					readerWriterLockSlim.EnterReadLock();
-					try
+					if (curNetwork.InternetChk == false)
 					{
-						if (curNetwork.InternetChk == false)
-						{
-							// internet이 연결 안되어있으면 pass
-							Console.WriteLine("THR_CheckLoginNAC :: curNetwork false");
-							continue;
-						}
-						else
-						{
-							Console.WriteLine("THR_CheckLoginNAC :: curNetwork true");
-						}
+						// internet이 연결 안되어있으면 pass
+						Console.WriteLine("[" + getNowDate() + "] 159 THR_CheckLoginNAC :: curNetwork false");
+						continue;
 					}
-					finally
+					else
 					{
-						readerWriterLockSlim.ExitReadLock();
+						Console.WriteLine("[" + getNowDate() + "] 164 THR_CheckLoginNAC :: curNetwork true");
 					}
-
-					/*
-					 * 
-					 */
-
-					nACLockSlim.EnterWriteLock();
-					try
-					{
-						if (nAC.isCheckEdgeDriver(nAC.getEdgeVesrion()) == false)
-						{
-							nAC.downEdgeDriver(nAC.getEdgeVesrion());
-						}
-
-						bool chk = nAC.isLogin("user", "1234");
-						Console.WriteLine("THR_CheckLoginNAC :: chk : " + chk);
-					}
-					finally
-					{
-						nACLockSlim.ExitReadLock();
-					}
-
 				}
-			}
-			finally
-			{
-				nACLockSlim.ExitReadLock();
+				finally
+				{
+					readerWriterLockSlim.ExitUpgradeableReadLock();
+				}
+
+				nACLockSlim.EnterWriteLock();
+				try
+				{
+					if (nAC.isCheckEdgeDriver(nAC.getEdgeVesrion()) == false)
+					{
+						nAC.downEdgeDriver(nAC.getEdgeVesrion());
+					}
+
+					bool chk = nAC.isLogin("user", "1234");
+					Console.WriteLine("[" + getNowDate() + "] 181 THR_CheckLoginNAC :: chk : " + chk);
+				}
+				finally
+				{
+					nACLockSlim.ExitReadLock();
+				}
 			}
 		}
 
@@ -256,14 +236,18 @@ namespace AutoConnectLAN.Control
 							n.NetworkType = 1;
 						}
 
+						nACLockSlim.EnterWriteLock();
 						network_list.Add(n);
+						nACLockSlim.ExitWriteLock();
 					}
 				}
 
 			}
 
+			nACLockSlim.EnterUpgradeableReadLock();
 			if (network_list.Count <= 0)
 			{
+				nACLockSlim.ExitUpgradeableReadLock();
 				return false;
 			}
 
