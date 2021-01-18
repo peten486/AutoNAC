@@ -8,6 +8,7 @@ namespace AutoConnectLAN.Model
 	{
         public bool InternetChk { get; set; }
         
+        public bool NACChk { get; set; }
         public string ChkDate { get; set; }
 
         public int NetworkType { get; set; }    //  1 : Ethernet

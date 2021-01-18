@@ -99,7 +99,21 @@ namespace AutoConnectLAN.Control
 					if (filepath.Contains("msedgedriver.exe") == false)
 						continue;
 
+					if (System.IO.File.Exists(filepath) == true)
+					{
+						try
+						{
+							System.IO.File.Delete(filepath);
+							Console.WriteLine("Delete past files");
+						}
+						catch (System.IO.IOException e)
+						{
+							// handle exception
+						}
+					}
+
 					zipArchiveEntry.ExtractToFile(filepath);
+					
 					System.IO.File.Move(filepath, new_filepath);
 					Console.WriteLine("MOVE FILE PATH : " + new_filepath);
 				}
@@ -139,7 +153,7 @@ namespace AutoConnectLAN.Control
 			bool chk = false;
 			using (IWebDriver driver = new EdgeDriver(_driver_path))
 			{
-				driver.Url = "http://192.168.25.15";
+				driver.Url = "http://192.168.25.48";
 				// _driver.Manage().Window.Maximize(); //브라우져 최대 확대
 
 				Thread.Sleep(5000);

@@ -83,13 +83,18 @@ namespace AutoConnectLAN.Control
 				readerWriterLockSlim.EnterUpgradeableReadLock();
 				try
 				{
+					curNetwork.InternetChk = isInternetConnected();
 					if (curNetwork.InternetChk == false)
 					{
 						// internet이 연결되지 않는 상태이면, 연결 시도
-						curNetwork.InternetChk = isInternetConnected();
+						
 						if (curNetwork.InternetChk == false)
 						{
 							cnt = 0;
+							curNetwork.NACChk = false;
+							curNetwork.ChkDate = "";
+							curNetwork.NetworkType = 0;
+							continue;
 							// 인터넷이 완전히 끊겼을 경우, WIFI 체크 후에 설정한 wifi가 설정되는지 확인
 						}
 						else
@@ -169,7 +174,7 @@ namespace AutoConnectLAN.Control
 					readerWriterLockSlim.ExitUpgradeableReadLock();
 				}
 
-				nACLockSlim.EnterWriteLock();
+				nACLockSlim.EnterUpgradeableReadLock();
 				try
 				{
 					if (nAC.isCheckEdgeDriver(nAC.getEdgeVesrion()) == false)
@@ -177,12 +182,18 @@ namespace AutoConnectLAN.Control
 						nAC.downEdgeDriver(nAC.getEdgeVesrion());
 					}
 
-					bool chk = nAC.isLogin("user", "1234");
-					Console.WriteLine("[" + getNowDate() + "] 181 THR_CheckLoginNAC :: chk : " + chk);
+
+					readerWriterLockSlim.EnterUpgradeableReadLock();
+					if (curNetwork.NACChk == false)
+					{
+						curNetwork.NACChk = nAC.isLogin("user", "1234");
+					}
+					Console.WriteLine("[" + getNowDate() + "] 181 THR_CheckLoginNAC :: chk : " + curNetwork.NACChk);
+					readerWriterLockSlim.ExitUpgradeableReadLock();
 				}
 				finally
 				{
-					nACLockSlim.ExitReadLock();
+					nACLockSlim.ExitUpgradeableReadLock();
 				}
 			}
 		}
@@ -250,7 +261,7 @@ namespace AutoConnectLAN.Control
 				nACLockSlim.ExitUpgradeableReadLock();
 				return false;
 			}
-
+			nACLockSlim.ExitUpgradeableReadLock();
 			return true;
 		}
 
@@ -360,7 +371,7 @@ namespace AutoConnectLAN.Control
 
 		public string getNowDate()
 		{
-			string now_date = DateTime.Today.ToString();
+			string now_date = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 			return now_date;
 		}
 	}
