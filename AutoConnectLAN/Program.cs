@@ -6,43 +6,30 @@ namespace AutoConnectLAN
 {
 	class Program
     {
+        Controller c;
+
+        Program()
+        {
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(Ctrl_C_Pressed);
+            c = new Controller();
+        }
         static int Main(string[] args)
         {
-            /*
-               CheckNAC checkNAC = null;
-               checkNAC = new CheckNAC();
+           (new Program()).Run();
+           return 0;
+        }
 
-               if (checkNAC.isCheckEdgeDriver(checkNAC.getEdgeVesrion()) == false)
-               {
-                   checkNAC.downEdgeDriver(checkNAC.getEdgeVesrion());
-               }
-
-               bool chk = checkNAC.isLogin("user", "1234");
-               Console.WriteLine("chk : " + chk);
-              */
-
-            Controller c = new Controller();
-            /*
-             bool chk = c.firstInternetCheck();
-             //Console.WriteLine("chk : " + chk);
-             if ( c.curNetwork.InternetChk == true && c.curNetwork.NetworkType == 2)
-             {
-                 c.printWiFiList();
-             }
-
-             if (c.nAC.isCheckEdgeDriver(c.nAC.getEdgeVesrion()) == false)
-             {
-                 c.nAC.downEdgeDriver(c.nAC.getEdgeVesrion());
-             }
-
-             chk = c.nAC.isLogin("user", "1234");
-             Console.WriteLine("chk : " + chk);
-            */
-
+        void Run()
+        {
             c.setFlag();
             c.run();
+        }
 
-            return 0;
+        void Ctrl_C_Pressed(object sender, ConsoleCancelEventArgs eventArgs)
+        {
+            c.setFlag_Exit();
+            Console.WriteLine("program 종료");
+           // c.nAC.closeDriver();
         }
 
 

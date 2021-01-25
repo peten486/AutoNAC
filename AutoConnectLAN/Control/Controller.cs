@@ -177,11 +177,12 @@ namespace AutoConnectLAN.Control
 				nACLockSlim.EnterUpgradeableReadLock();
 				try
 				{
+					/*
 					if (nAC.isCheckEdgeDriver(nAC.getEdgeVesrion()) == false)
 					{
 						nAC.downEdgeDriver(nAC.getEdgeVesrion());
 					}
-
+					*/
 
 					readerWriterLockSlim.EnterUpgradeableReadLock();
 					if (curNetwork.NACChk == false)
